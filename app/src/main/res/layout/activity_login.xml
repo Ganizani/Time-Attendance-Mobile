@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/lake"
+    tools:context="emplogtech.com.mytimesheet.Activities.Login">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/timg">
+
+        <RelativeLayout
+            android:id="@+id/picRelative"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp">
+
+            <LinearLayout
+                android:id="@+id/linPict"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_marginLeft="60dp"
+                android:layout_marginRight="50dp"
+                android:layout_centerInParent="true"
+                android:orientation="vertical">
+
+                <com.mikhaellopez.circularimageview.CircularImageView
+                    android:id="@+id/circularImageView"
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:src="@drawable/logo"
+                    app:civ_border="true"
+                    app:civ_border_color="#002d37"
+                    app:civ_border_width="5dp"
+                    app:civ_shadow="true"
+                    app:civ_shadow_color="#fff"
+                    app:civ_shadow_radius="10" />
+            </LinearLayout>
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/rledt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_below="@+id/picRelative"
+            android:layout_marginTop="75dp"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/edtmail"
+                android:layout_width="250dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="20dp"
+                android:textSize="14dp"
+                android:background="@drawable/custom_edt"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:maxLines="1"
+                android:padding="8dp"
+                android:textColor="#fff"
+                android:textColorHint="#fff"
+                android:drawableLeft="@mipmap/email">
+
+            </EditText>
+
+            <EditText
+                android:id="@+id/edtPass"
+                android:layout_width="250dp"
+                android:layout_height="40dp"
+                android:textSize="14dp"
+                android:layout_below="@+id/edtmail"
+                android:layout_marginTop="10dp"
+                android:maxLines="1"
+                android:inputType="textPassword"
+                android:padding="8dp"
+                android:background="@drawable/custom_edt"
+                android:hint="Password"
+                android:textColorHint="#fff"
+                android:textColor="#fff"
+                android:drawableLeft="@mipmap/lock">
+            </EditText>
+            <Button
+                android:id="@+id/btnLogin"
+                android:layout_below="@+id/edtPass"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="login"
+                android:layout_marginTop="25dp"
+                android:layout_marginLeft="55dp"
+                android:background="@drawable/btncustom"
+                android:textColor="#fff"
+                android:text="Sign in"/>
+
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+
+
+
+
+</FrameLayout>

@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MyTimeSheet</string>
+    <string name="quotedesc">Welcome! Where should we deliver to?</string>
+    <string name="leaveForm">Leave Form</string>
+    <string name="contact">Contact Details On Leave</string>
+    <string name="attachment">Attachment</string>
+</resources>
