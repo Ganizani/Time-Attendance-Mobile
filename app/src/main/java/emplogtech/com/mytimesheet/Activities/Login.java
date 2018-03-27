@@ -84,7 +84,7 @@ public class Login extends Activity {
 
             try{
 
-                URL url = new URL("http://nexgencs.co.za/devApi/login.php");
+                URL url = new URL("http://nexgencs.co.za/devApi/ness_login.php");
 
                 JSONObject postDataParams = new JSONObject();
                 postDataParams.put("username", args[0]);
@@ -138,6 +138,8 @@ public class Login extends Activity {
 
             int success = 0;
             String message = "";
+            String name="",email;
+            int id=0,compID=0,deptID=0;
 
             if (pDialog != null && pDialog.isShowing()) {
                 pDialog.dismiss();
@@ -149,6 +151,13 @@ public class Login extends Activity {
                     JSONObject object = new JSONObject(result);
                     success = object.getInt("success");
                     message = object.getString("message");
+                    if(success == 1){
+                    id = object.getInt("id");
+                    compID = object.getInt("compID");
+                    deptID = object.getInt("deptID");
+                    name = object.getString("name");
+                    }
+
 
 
                 }catch (JSONException e){
@@ -170,10 +179,7 @@ public class Login extends Activity {
 
             if(success == 1){
 
-
-                String fullnam = "Whatever";
-
-                session.createLoginSession(fullnam,String.valueOf(1),String.valueOf(3));
+                session.createLoginSession(name,String.valueOf(compID),String.valueOf(id),String.valueOf(deptID));
                 Intent intent = new Intent(Login.this, MainActivity.class);
                 startActivity(intent);
                 Toast.makeText(getApplicationContext(), message,
@@ -182,7 +188,7 @@ public class Login extends Activity {
 
             }else{
 
-                Toast.makeText(getApplicationContext(), message,
+                Toast.makeText(getApplicationContext(), result,
                         Toast.LENGTH_LONG).show();
             }
         }

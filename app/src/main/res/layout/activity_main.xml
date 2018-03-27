@@ -19,13 +19,14 @@
 
         <ImageView
             android:layout_gravity="center"
-            android:src="@mipmap/get_location"
+            android:src="@mipmap/acc"
             android:layout_width="70dp"
             android:layout_height="70dp" />
 
         <TextView
             android:layout_marginTop="@dimen/activity_horizontal_margin"
             android:gravity="center"
+            android:id="@+id/txtWelcome"
             android:textColor="@color/colorWhite"
             android:textSize="@dimen/large_text"
             android:paddingLeft="35dp"
@@ -109,7 +110,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="@dimen/items_inbetween"
-                        android:text="PICK LOCATION"
+                        android:text="GET LOCATION"
                         android:textColor="@color/colorPrimary" />
 
                 </LinearLayout>
@@ -121,11 +122,10 @@
     </android.support.v7.widget.CardView>
 
     <Button
-        android:enabled="false"
         android:layout_margin="@dimen/activity_horizontal_margin"
         style="@style/proceedButtonStyle"
         android:id="@+id/btnLocation"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:text="PROCEED" />
+        android:text="Apply for Leave" />
 </RelativeLayout>

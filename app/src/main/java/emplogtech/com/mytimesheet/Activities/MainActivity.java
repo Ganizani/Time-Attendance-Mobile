@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     @BindView(R.id.btnLocation)Button btnProceed;
     @BindView(R.id.tvAddress)TextView tvAddress;
     @BindView(R.id.tvEmpty)TextView tvEmpty;
+    @BindView(R.id.txtWelcome)TextView txtWelcome;
     @BindView(R.id.rlPickLocation)RelativeLayout rlPick;
 
 
@@ -94,6 +96,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         session = new SessionManager(this);
         session.checkLogin();
 
+        HashMap<String, String> user = session.getUserDetails();
+        String username = user.get(SessionManager.KEY_FULLNAME);
+
         ButterKnife.bind(this);
 
         permissionUtils=new PermissionUtils(MainActivity.this);
@@ -103,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         permissionUtils.check_permission(permissions,"Need GPS permission for getting your location",1);
 
+        txtWelcome.setText("Welcome "+ username);
 
         rlPick.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -120,9 +126,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                 } else {
 
-                    if(btnProceed.isEnabled())
-                        btnProceed.setEnabled(false);
-
+                  /*  if(btnProceed.isEnabled())
+                        btnProceed.setEnabled(false);*/
                     showToast("Couldn't get the location. Make sure location is enabled on the device");
                 }
             }
@@ -401,8 +406,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
 
     // Permission check functions
-
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {

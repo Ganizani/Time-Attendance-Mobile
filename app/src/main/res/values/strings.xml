@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">MyTimeSheet</string>
-    <string name="quotedesc">Welcome! Where should we deliver to?</string>
+    <string name="quotedesc">Welcome! </string>
     <string name="leaveForm">Leave Form</string>
     <string name="contact">Contact Details On Leave</string>
     <string name="attachment">Attachment</string>
     <string name="powered_by">Powered by Ganizani</string>
+    <string name="url">http://nexgencs.co.za/devApi/upload.php</string>
 </resources>
