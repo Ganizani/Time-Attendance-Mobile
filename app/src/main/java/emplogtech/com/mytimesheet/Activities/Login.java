@@ -138,7 +138,7 @@ public class Login extends Activity {
 
             int success = 0;
             String message = "";
-            String name="",email;
+            String name="";
             int id=0,compID=0,deptID=0;
 
             if (pDialog != null && pDialog.isShowing()) {
@@ -169,10 +169,10 @@ public class Login extends Activity {
                         Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
                     } else if (responseCode == 500) {
                         Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
-                    } else {
+                    } /*else {
                         Toast.makeText(getApplicationContext(), "Unexpected Error occurred! please ensure your device is connected to the Internet]",
                                 Toast.LENGTH_LONG).show();
-                    }
+                    }*/
                 }
 
             }
@@ -188,7 +188,7 @@ public class Login extends Activity {
 
             }else{
 
-                Toast.makeText(getApplicationContext(), result,
+                Toast.makeText(getApplicationContext(), message,
                         Toast.LENGTH_LONG).show();
             }
         }

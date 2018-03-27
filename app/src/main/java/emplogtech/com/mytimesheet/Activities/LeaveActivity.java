@@ -55,10 +55,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
 
 import Classes.FilePath;
+import Classes.SessionManager;
 import Classes.SingleUploadBroadcastReceiver;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -94,6 +96,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
     String prompt = "--Select Leave Type--";
     String other = "Other";
 
+    SessionManager session;
 
     private final SingleUploadBroadcastReceiver uploadReceiver =
             new SingleUploadBroadcastReceiver();
@@ -103,6 +106,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_leave);
 
+
         ButterKnife.bind(this);
         initCustomSpinner();
         initImageview();
@@ -110,6 +114,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
         fromCalender = Calendar.getInstance();
         toCalender= Calendar.getInstance();
+        session = new SessionManager(this);
 
         prgDialog = new ProgressDialog(this);
         prgDialog.setMessage("Uploading leave information...");
@@ -186,6 +191,9 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                         leave_type = edtOther.getText().toString();
                     }
+                    HashMap<String, String> user = session.getUserDetails();
+                    String user_id = user.get(SessionManager.KEY_UID);
+
                     from_date = edtFromDate.getText().toString();
                     to_date = edtToDate.getText().toString();
                     address = edtAddress.getText().toString();
@@ -194,9 +202,9 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                     if(displayName != null){
                         prgDialog.show();
-                    fileUploadFunction(displayName,leave_type,from_date,to_date,address,cell,email);
+                    fileUploadFunction(displayName,leave_type,from_date,to_date,address,cell,email,user_id);
                     }else{
-                        myDialog(leave_type,from_date,to_date,address,cell,email);
+                        myDialog(leave_type,from_date,to_date,address,cell,email,user_id);
                     }
 
                 }
@@ -355,7 +363,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
     }
 
-    public void fileUploadFunction(String fileName,String leaveType,String fromDate,String toDate, String addr, String phone,String ema) {
+    public void fileUploadFunction(String fileName,String leaveType,String fromDate,String toDate, String addr, String phone,String ema,String userID) {
 
         filePathHolder = FilePath.getPath(this, uri);
 
@@ -380,6 +388,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
                         .addParameter("addr", addr)
                         .addParameter("phone", phone)
                         .addParameter("ema", ema)
+                        .addParameter("userId", userID)
                         .setNotificationConfig(new UploadNotificationConfig())
                         .setMaxRetries(5)
                         .startUpload();
@@ -564,7 +573,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         }
     }
 
-    public void myDialog(final String leaveType, final String fromDate, final String toDate, final String addr, final String phone, final String ema){
+    public void myDialog(final String leaveType, final String fromDate, final String toDate, final String addr, final String phone, final String ema,final String userId){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this,R.style.AlerDialogTheme);
         alertDialogBuilder.setMessage("Do you want to apply without an attachment?");
         alertDialogBuilder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
@@ -572,7 +581,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             public void onClick(DialogInterface dialog, int which) {
 
                 //Upload Without Attachment
-                new NoAttachment().execute(leaveType,fromDate,toDate,addr,phone,ema);
+                new NoAttachment().execute(leaveType,fromDate,toDate,addr,phone,ema,userId);
             }
         });
         alertDialogBuilder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -607,6 +616,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
                 postDataParams.put("addr", args[3]);
                 postDataParams.put("phone", args[4]);
                 postDataParams.put("ema", args[5]);
+                postDataParams.put("userId", args[6]);
                 Log.e("params",postDataParams.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -660,6 +670,8 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
             if(result != null){
                 showToast(result);
+            }else{
+                showToast("Error, please ensure you have data connection");
             }
 
             if (responseCode == 404) {
@@ -694,7 +706,6 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         }
         return result.toString();
     }
-
 
     public class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter {
 

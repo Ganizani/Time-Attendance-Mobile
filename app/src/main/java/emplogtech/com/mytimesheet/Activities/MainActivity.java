@@ -2,11 +2,13 @@ package emplogtech.com.mytimesheet.Activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
@@ -39,13 +41,26 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -63,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     @BindView(R.id.txtWelcome)TextView txtWelcome;
     @BindView(R.id.rlPickLocation)RelativeLayout rlPick;
 
+    int responseCode;
+    ProgressDialog prgDialog;
+    String recordURL = "http://nexgencs.co.za/devApi/record.php";
+
 
     // LogCat tag
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -78,6 +97,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     double latitude;
     double longitude;
+    String locationTime;
+
+    String deptId,userId;
 
     // list of permissions
 
@@ -96,8 +118,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         session = new SessionManager(this);
         session.checkLogin();
 
+
         HashMap<String, String> user = session.getUserDetails();
         String username = user.get(SessionManager.KEY_FULLNAME);
+        userId = user.get(SessionManager.KEY_UID);
+        deptId = user.get(SessionManager.KEY_DEPTID);
+
 
         ButterKnife.bind(this);
 
@@ -105,6 +131,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        prgDialog = new ProgressDialog(this);
+        prgDialog.setMessage("Clocking please wait...");
+        prgDialog.setCancelable(false);
 
         permissionUtils.check_permission(permissions,"Need GPS permission for getting your location",1);
 
@@ -120,15 +150,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     getAddress();
                     Date date=new Date(mLastLocation.getTime());
                     SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String locationTime = sdf2.format(date);
-                    showToast(locationTime);
+                    locationTime = sdf2.format(date);
+                    String time = "Timestamp: "+locationTime;
+                    tvAddress.append("\n"+time);
+                    //showToast(locationTime);
+                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationTime,locationTime,deptId);
 
 
                 } else {
 
                   /*  if(btnProceed.isEnabled())
                         btnProceed.setEnabled(false);*/
-                    showToast("Couldn't get the location. Make sure location is enabled on the device");
+                    showToast("Couldn't get the location. Make sure location is enabled on the device before clocking");
                 }
             }
         });
@@ -206,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
         if(locationAddress!=null)
         {
+            String msg = "Nearest address to your Location:";
             String address = locationAddress.getAddressLine(0);
             String address1 = locationAddress.getAddressLine(1);
             String city = locationAddress.getLocality();
@@ -213,13 +247,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             String country = locationAddress.getCountryName();
             String postalCode = locationAddress.getPostalCode();
 
+
             //Date date=new Date(locationAddress.);
 
             String currentLocation;
 
             if(!TextUtils.isEmpty(address))
             {
-                currentLocation=address;
+                currentLocation = msg;
+                currentLocation+="\n"+address;
 
                 if (!TextUtils.isEmpty(address1))
                     currentLocation+="\n"+address1;
@@ -242,6 +278,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                 if (!TextUtils.isEmpty(country))
                     currentLocation+="\n"+country;
+
+
 
                 tvEmpty.setVisibility(View.GONE);
                 tvAddress.setText(currentLocation);
@@ -441,7 +479,123 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
     }
 
+    public void saveClock(){}
 
+    public class clock extends AsyncTask<String, Void, String> {
+
+        protected void onPreExecute(){
+            prgDialog.show();
+
+        }
+
+        protected String doInBackground(String... args) {
+
+
+            try{
+
+                URL url = new URL(recordURL);
+                JSONObject postDataParams = new JSONObject();
+                postDataParams.put("userId", args[0]);
+                postDataParams.put("lat", args[1]);
+                postDataParams.put("lon", args[2]);
+                postDataParams.put("dat", args[3]);
+                postDataParams.put("tim", args[4]);
+                postDataParams.put("deptId", args[5]);
+                //postDataParams.put("status", args[6]);
+                Log.e("params",postDataParams.toString());
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(15000 /* milliseconds */);
+                conn.setConnectTimeout(15000 /* milliseconds */);
+                conn.setRequestMethod("POST");
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+
+                OutputStream os = conn.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(getPostDataString(postDataParams));
+                writer.flush();
+                writer.close();
+                os.close();
+                responseCode=conn.getResponseCode();
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+
+                    BufferedReader in=new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                    return sb.toString();
+
+                }
+                else {
+                    return new String("false : "+responseCode);
+                }
+
+
+            }catch(Exception e){
+                return new String("Exception: " + e.getMessage());
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            if (prgDialog != null && prgDialog.isShowing()) {
+                prgDialog.dismiss();
+            }
+            if(result != null){
+                //showToast(result);
+
+                if(result.equals(String.valueOf(1))){
+                    showToast("Clock Successful");
+                }else{
+                    showToast("Clock Unsuccessful");
+                }
+
+            }else{
+                showToast("Error, please ensure you have data connection");
+            }
+
+            if (responseCode == 404) {
+                showToast("Requested resource not found");
+            } else if (responseCode == 500) {
+                showToast("Something went wrong at server end");
+            }
+        }
+    }
+
+    public String getPostDataString(JSONObject params) throws Exception {
+
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+
+        Iterator<String> itr = params.keys();
+
+        while(itr.hasNext()){
+
+            String key= itr.next();
+            Object value = params.get(key);
+
+            if (first)
+                first = false;
+            else
+                result.append("&");
+
+            result.append(URLEncoder.encode(key, "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(value.toString(), "UTF-8"));
+
+        }
+        return result.toString();
+    }
 
 }
 

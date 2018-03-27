@@ -72,7 +72,7 @@
                 <TextView
                     android:layout_centerInParent="true"
                     android:id="@+id/tvEmpty"
-                    android:text="Tap pick location to get your address"
+                    android:text="Please tap below to clock"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -110,7 +110,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="@dimen/items_inbetween"
-                        android:text="GET LOCATION"
+                        android:text="CLOCK"
                         android:textColor="@color/colorPrimary" />
 
                 </LinearLayout>
