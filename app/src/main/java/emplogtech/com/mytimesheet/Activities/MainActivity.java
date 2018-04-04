@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     @BindView(R.id.tvAddress)TextView tvAddress;
     @BindView(R.id.tvEmpty)TextView tvEmpty;
     @BindView(R.id.txtWelcome)TextView txtWelcome;
+    @BindView(R.id.txtClock)TextView txtClock;
     @BindView(R.id.rlPickLocation)RelativeLayout rlPick;
 
     int responseCode;
@@ -107,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     PermissionUtils permissionUtils;
 
     boolean isPermissionGranted;
+    String prefStatus,status;
 
     SessionManager session;
 
@@ -115,8 +118,24 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        ButterKnife.bind(this);
         session = new SessionManager(this);
         session.checkLogin();
+
+        prefStatus = getFromSP("status");
+        if(prefStatus != null){
+
+            if(prefStatus.equals("IN")){
+                txtClock.setText("CLOCK OUT");
+                status = "OUT";
+            }else{
+                txtClock.setText("CLOCK IN");
+                status = "IN";
+            }
+        }else{
+            txtClock.setText("CLOCK IN");
+            status = "IN";
+        }
 
 
         HashMap<String, String> user = session.getUserDetails();
@@ -125,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         deptId = user.get(SessionManager.KEY_DEPTID);
 
 
-        ButterKnife.bind(this);
+
 
         permissionUtils=new PermissionUtils(MainActivity.this);
 
@@ -153,8 +172,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     locationTime = sdf2.format(date);
                     String time = "Timestamp: "+locationTime;
                     tvAddress.append("\n"+time);
+                    tvAddress.append("\n"+"Status: "+status);
                     //showToast(locationTime);
-                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationTime,locationTime,deptId);
+                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationTime,locationTime,deptId,status);
+                    saveInSp("status",status);
+                    if(status.equals("IN")){
+                        txtClock.setText("CLOCK OUT");
+                    }else
+                        txtClock.setText("CLOCK IN");
 
 
                 } else {
@@ -254,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
             if(!TextUtils.isEmpty(address))
             {
-                currentLocation = msg;
+                currentLocation = msg + "\n";
                 currentLocation+="\n"+address;
 
                 if (!TextUtils.isEmpty(address1))
@@ -481,6 +506,17 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     public void saveClock(){}
 
+    private String getFromSP(String key){
+        SharedPreferences preferences = getApplicationContext().getSharedPreferences("TIMESHEET", android.content.Context.MODE_PRIVATE);
+        return preferences.getString(key, null);
+    }
+    private void saveInSp(String key,String value){
+        SharedPreferences preferences = getApplicationContext().getSharedPreferences("TIMESHEET", android.content.Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(key, value);
+        editor.commit();
+    }
+
     public class clock extends AsyncTask<String, Void, String> {
 
         protected void onPreExecute(){
@@ -501,7 +537,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 postDataParams.put("dat", args[3]);
                 postDataParams.put("tim", args[4]);
                 postDataParams.put("deptId", args[5]);
-                //postDataParams.put("status", args[6]);
+                postDataParams.put("status", args[6]);
+                //postDataParams.put("token","");
                 Log.e("params",postDataParams.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
