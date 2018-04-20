@@ -111,7 +111,7 @@ public class Reminder extends AppCompatActivity {
                 localData.setOutReminderStatus(isChecked);
                 if (isChecked) {
                     Log.d(TAG, "onCheckedChanged: true");
-                    NotificationScheduler.setReminder(Reminder.this, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_OUT_REMINDER_REQUEST_CODE);
+                    NotificationScheduler.setReminder(Reminder.this, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),DAILY_OUT_REMINDER_REQUEST_CODE);
                     ll_set_outTime.setAlpha(1f);
                 } else {
                     Log.d(TAG, "onCheckedChanged: false");
@@ -152,11 +152,19 @@ public class Reminder extends AppCompatActivity {
                     public void onTimeSet(TimePicker timePicker, int hour, int min) {
                         Log.d(TAG, "onTimeSet: hour " + hour);
                         Log.d(TAG, "onTimeSet: min " + min);
-                        localData.set_hour(hour);
-                        localData.set_min(min);
-                        if(status == "IN"){tvTime.setText(getFormatedTime(hour, min));}
-                        if(status =="OUT"){tvOutTime.setText(getFormatedTime(hour, min));}
-                        NotificationScheduler.setReminder(Reminder.this, AlarmReceiver.class, localData.get_hour(), localData.get_min(),reqCode);
+                        if(status == "IN"){
+                            localData.set_hour(hour);
+                            localData.set_min(min);
+                            tvTime.setText(getFormatedTime(hour, min));
+                            NotificationScheduler.setReminder(Reminder.this, AlarmReceiver.class, localData.get_hour(), localData.get_min(),reqCode);
+                        }
+                        if(status =="OUT"){
+                            tvOutTime.setText(getFormatedTime(hour, min));
+                            localData.set_outHour(hour);
+                            localData.set_outMin(min);
+                            NotificationScheduler.setReminder(Reminder.this, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),reqCode);
+                        }
+
                         showToast("Reminder set for "+getFormatedTime(hour,min));
 
 
