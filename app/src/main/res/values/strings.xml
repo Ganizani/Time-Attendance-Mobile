@@ -6,4 +6,15 @@
     <string name="attachment">Attachment</string>
     <string name="powered_by">Powered by Ganizani</string>
     <string name="url">http://nexgencs.co.za/devApi/upload.php</string>
+
+
+    <!-- Reminder -->
+
+    <string name="sett_reminder_header">Set Reminder for Clock IN</string>
+    <string name="sett_reminder_label">Remind Me</string>
+    <string name="sett_reminder_desc">We will remind you to clock IN</string>
+    <string name="sett_outReminder_desc">We will remind you to clock OUT</string>
+    <string name="sett_reminder_time_label">Set Reminder Time</string>
+    <string name="sett_reminder_time_content">8 : 00 AM</string>
+    <string name="sett_outReminder_time_content">4 : 00 PM</string>
 </resources>

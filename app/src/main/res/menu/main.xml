@@ -7,4 +7,10 @@
         android:title="logout"
         android:icon="@mipmap/logout"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/reminder"
+        android:title="logout"
+        android:icon="@mipmap/ic_timer"
+        app:showAsAction="always" />
 </menu>

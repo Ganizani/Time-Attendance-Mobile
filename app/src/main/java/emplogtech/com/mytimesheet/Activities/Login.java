@@ -84,10 +84,10 @@ public class Login extends Activity {
 
             try{
 
-                URL url = new URL("http://nexgencs.co.za/devApi/ness_login.php");
+                URL url = new URL("http://197.242.148.185:8002/users/mobile/login");
 
                 JSONObject postDataParams = new JSONObject();
-                postDataParams.put("username", args[0]);
+                postDataParams.put("email", args[0]);
                 postDataParams.put("password", args[1]);
                 Log.e("params",postDataParams.toString());
 

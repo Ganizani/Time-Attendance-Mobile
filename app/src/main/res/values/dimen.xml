@@ -18,4 +18,6 @@
     <dimen name="items_inbetween">8dp</dimen>
     <dimen name="items_padding">4dp</dimen>
 
+    <dimen name="timer_icon">20dp</dimen>
+
 </resources>

@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     int responseCode;
     ProgressDialog prgDialog;
-    String recordURL = "http://nexgencs.co.za/devApi/record.php";
+    String recordURL = "http://197.242.148.185:8002/records/mobile";
 
 
     // LogCat tag
@@ -417,6 +417,13 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             session.logoutUser();
             return true;
         }
+
+        if(id == R.id.reminder){
+
+            Intent intent = new Intent(getApplicationContext(),Reminder.class);
+            startActivity(intent);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -531,13 +538,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                 URL url = new URL(recordURL);
                 JSONObject postDataParams = new JSONObject();
-                postDataParams.put("userId", args[0]);
-                postDataParams.put("lat", args[1]);
-                postDataParams.put("lon", args[2]);
-                postDataParams.put("dat", args[3]);
-                postDataParams.put("tim", args[4]);
-                postDataParams.put("deptId", args[5]);
+                postDataParams.put("user_id", args[0]);
                 postDataParams.put("status", args[6]);
+                postDataParams.put("latitude", args[1]);
+                postDataParams.put("longitude", args[2]);
+                postDataParams.put("date", args[3]);
+                postDataParams.put("time", args[4]);
+                postDataParams.put("deptId", args[5]);
+
                 //postDataParams.put("token","");
                 Log.e("params",postDataParams.toString());
 
