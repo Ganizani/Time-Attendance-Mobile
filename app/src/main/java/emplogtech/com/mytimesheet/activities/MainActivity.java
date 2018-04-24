@@ -1,4 +1,4 @@
-package emplogtech.com.mytimesheet.Activities;
+package emplogtech.com.mytimesheet.activities;
 
 import android.Manifest;
 import android.app.Activity;
@@ -24,7 +24,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import Classes.SessionManager;
+import classes.SessionManager;
 import LocationUtil.PermissionUtils;
 import LocationUtil.PermissionUtils.PermissionResultCallback;
 import com.google.android.gms.common.ConnectionResult;
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     int responseCode;
     ProgressDialog prgDialog;
-    String recordURL = "http://197.242.148.185:8002/records/mobile";
+    String recordURL = "http://52.90.80.92:8002/records/mobile";
 
 
     // LogCat tag

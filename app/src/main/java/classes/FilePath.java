@@ -1,4 +1,4 @@
-package Classes;
+package classes;
 
 /**
  * Created by Abdoul on 25-03-2018.

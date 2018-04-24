@@ -1,11 +1,10 @@
-package emplogtech.com.mytimesheet.Activities;
+package emplogtech.com.mytimesheet.activities;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,7 +13,6 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,7 +28,7 @@ import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import Classes.SessionManager;
+import classes.SessionManager;
 import emplogtech.com.mytimesheet.R;
 
 public class Login extends Activity {
@@ -67,6 +65,9 @@ public class Login extends Activity {
             new SendRequest().execute(email,password);
         }else
             Toast.makeText(getApplicationContext(), "Please fill in all fields", Toast.LENGTH_LONG).show();
+
+        /*Intent intent = new Intent(Login.this, Reminder.class);
+        startActivity(intent);*/
     }
 
     public class SendRequest extends AsyncTask<String, Void, String> {
@@ -84,7 +85,7 @@ public class Login extends Activity {
 
             try{
 
-                URL url = new URL("http://197.242.148.185:8002/users/mobile/login");
+                URL url = new URL("http://52.90.80.92:8002/users/mobile/login");
 
                 JSONObject postDataParams = new JSONObject();
                 postDataParams.put("email", args[0]);

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/lake"
-    tools:context="emplogtech.com.mytimesheet.Activities.Login">
+    tools:context="emplogtech.com.mytimesheet.activities.Login">
 
     <RelativeLayout
         android:layout_width="match_parent"

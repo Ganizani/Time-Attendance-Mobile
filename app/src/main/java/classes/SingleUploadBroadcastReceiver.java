@@ -1,4 +1,4 @@
-package Classes;
+package classes;
 
 import net.gotev.uploadservice.UploadServiceBroadcastReceiver;
 

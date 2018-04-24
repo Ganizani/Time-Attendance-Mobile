@@ -1,16 +1,14 @@
-package Classes;
+package classes;
 
 
 
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import emplogtech.com.mytimesheet.Activities.MainActivity;
-import emplogtech.com.mytimesheet.Activities.Reminder;
+import emplogtech.com.mytimesheet.activities.MainActivity;
 
 /**
  * Created by Abdoul on 20-04-2018.
@@ -34,7 +32,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 Log.d(TAG, "onReceive: BOOT_COMPLETED");
                 LocalData localData = new LocalData(context);
                 NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_REMINDER_REQUEST_CODE);
-                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_OUT_REMINDER_REQUEST_CODE);
+                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),DAILY_OUT_REMINDER_REQUEST_CODE);
                 return;
             }
         }

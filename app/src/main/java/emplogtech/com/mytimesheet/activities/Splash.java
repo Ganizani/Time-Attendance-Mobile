@@ -1,4 +1,4 @@
-package emplogtech.com.mytimesheet.Activities;
+package emplogtech.com.mytimesheet.activities;
 
 import android.app.Activity;
 import android.content.Intent;

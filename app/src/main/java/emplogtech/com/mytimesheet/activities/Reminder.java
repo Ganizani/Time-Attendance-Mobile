@@ -1,4 +1,4 @@
-package emplogtech.com.mytimesheet.Activities;
+package emplogtech.com.mytimesheet.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,9 +22,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import Classes.AlarmReceiver;
-import Classes.LocalData;
-import Classes.NotificationScheduler;
+import classes.AlarmReceiver;
+import classes.LocalData;
+import classes.NotificationScheduler;
 import emplogtech.com.mytimesheet.R;
 
 public class Reminder extends AppCompatActivity {

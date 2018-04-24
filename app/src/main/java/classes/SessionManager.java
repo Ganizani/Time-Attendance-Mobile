@@ -1,4 +1,4 @@
-package Classes;
+package classes;
 
 /**
  * Created by Abdoul on 08-03-2018.
@@ -11,7 +11,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
-import emplogtech.com.mytimesheet.Activities.Login;
+import emplogtech.com.mytimesheet.activities.Login;
 
 public class SessionManager {
 

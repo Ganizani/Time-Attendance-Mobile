@@ -1,4 +1,4 @@
-package Classes;
+package classes;
 
 
 
@@ -19,7 +19,6 @@ import android.support.v4.app.TaskStackBuilder;
 
 import java.util.Calendar;
 
-import emplogtech.com.mytimesheet.Activities.MainActivity;
 import emplogtech.com.mytimesheet.R;
 
 import static android.content.Context.ALARM_SERVICE;
@@ -62,7 +61,7 @@ public class NotificationScheduler {
         intent1.putExtra("requestCode",resquestCode);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, resquestCode, intent1, PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        am.setInexactRepeating(AlarmManager.RTC_WAKEUP, setcalendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        am.setRepeating(AlarmManager.RTC_WAKEUP, setcalendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
 
     }
 
