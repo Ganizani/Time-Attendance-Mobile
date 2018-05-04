@@ -10,6 +10,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -20,6 +22,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
+import android.util.Base64OutputStream;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -36,9 +40,17 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -53,8 +65,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
+import DBHelper.RecordDB;
 import classes.FilePath;
 import classes.SessionManager;
 import classes.SingleUploadBroadcastReceiver;
@@ -62,6 +76,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import net.gotev.uploadservice.MultipartUploadRequest;
 import net.gotev.uploadservice.UploadNotificationConfig;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import javax.net.ssl.HttpsURLConnection;
 import emplogtech.com.mytimesheet.R;
@@ -72,27 +89,33 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
     @BindView(R.id.edtOther)EditText edtOther;
     @BindView(R.id.edtFrom)EditText edtFromDate;
     @BindView(R.id.edtTo)EditText edtToDate;
+    @BindView(R.id.edtLastDay)EditText edtLastDay;
     @BindView(R.id.edtAddress)EditText edtAddress;
     @BindView(R.id.edtEmail)EditText edtEmail;
     @BindView(R.id.edtCell)EditText edtCell;
     @BindView(R.id.btnApply)Button btnApply;
     @BindView(R.id.txtAttachment)TextView txtAttachment;
     @BindView(R.id.imgAttachment)ImageView imgAttachment;
-    String serverURL = "http://nexgencs.co.za/devApi/upload.php";
+    @BindView(R.id.imgDownload)ImageView imgDownload;
+    String serverURL = "http://52.90.80.92:8002/leaves";
     private static final String TAG = "AndroidUploadService";
 
-    ProgressDialog prgDialog;
+    ProgressDialog prgDialog,pDialog;
+    private ArrayList<HashMap<String, String>> leaveList;
 
-    Calendar fromCalender,toCalender;
+    Calendar fromCalender,toCalender,lastDay;
     int responseCode;
     Uri uri;
-    String leave_type, from_date, to_date,address,email,cell;
+    String leave_type, from_date, to_date,address,email,cell,last_day;
     String filePathHolder, fileID;
     String displayName = null;
+    String fileExtension;
     String prompt = "--Select Leave Type--";
     String other = "Other";
+    String token;
 
     SessionManager session;
+    RecordDB myDB = new RecordDB(this);
 
     private final SingleUploadBroadcastReceiver uploadReceiver =
             new SingleUploadBroadcastReceiver();
@@ -108,10 +131,22 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         initImageview();
         AllowRunTimePermission();
 
+
+        leaveList = myDB.getAllLeave();
+
+        session = new SessionManager(this);
+        HashMap<String, String> user = session.getUserDetails();
+        token = "Bearer "+user.get(SessionManager.KEY_TOKEN);
+
+        if(leaveList.size() ==0 ){
+
+            dialogMessage("It appears you have no leave type stored, please click on the orange cloud icon to download leave types","Leave types");
+        }
         fromCalender = Calendar.getInstance();
         toCalender= Calendar.getInstance();
-        session = new SessionManager(this);
+        lastDay = Calendar.getInstance();
 
+        session = new SessionManager(this);
         prgDialog = new ProgressDialog(this);
         prgDialog.setMessage("Uploading leave information...");
         prgDialog.setCancelable(false);
@@ -154,6 +189,22 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         };
 
 
+        final DatePickerDialog.OnDateSetListener lDate = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear,
+                                  int dayOfMonth) {
+                // TODO Auto-generated method stub
+                lastDay.set(Calendar.YEAR, year);
+                lastDay.set(Calendar.MONTH, monthOfYear);
+                lastDay.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                updateLabel(edtLastDay,lastDay.getTime());
+            }
+
+        };
+
+
+
+
         edtFromDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -176,6 +227,17 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             }
         });
 
+        edtLastDay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new DatePickerDialog(LeaveActivity.this, R.style.AlerDialogTheme, lDate,
+                        lastDay.get(Calendar.YEAR),
+                        lastDay.get(Calendar.MONTH),
+                        lastDay.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
 
         btnApply.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -187,24 +249,37 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                         leave_type = edtOther.getText().toString();
                     }
+
+
                     HashMap<String, String> user = session.getUserDetails();
                     String user_id = user.get(SessionManager.KEY_UID);
-
+                    int leaveID = myDB.getleaveId(leaveSpinner.getSelectedItem().toString());
                     from_date = edtFromDate.getText().toString();
                     to_date = edtToDate.getText().toString();
                     address = edtAddress.getText().toString();
                     email = edtEmail.getText().toString();
                     cell = edtCell.getText().toString();
+                    last_day = edtLastDay.getText().toString();
 
                     if(displayName != null){
+
                         prgDialog.show();
-                    fileUploadFunction(displayName,leave_type,from_date,to_date,address,cell,email,user_id);
+                    fileUploadFunction(displayName,String.valueOf(leaveID),from_date,to_date,last_day,address,cell,email,user_id,leave_type);
                     }else{
-                        myDialog(leave_type,from_date,to_date,address,cell,email,user_id);
+                     //myDialog(String.valueOf(leaveID),from_date,to_date,last_day,address,cell,email,user_id,leave_type);
+                        new NoAttachment().execute(String.valueOf(leaveID),from_date,to_date,last_day,address,cell,email,user_id,leave_type);
                     }
 
                 }
 
+            }
+        });
+
+        imgDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                new getLeave().execute(token);
             }
         });
 
@@ -227,14 +302,9 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
     }
     private void initCustomSpinner() {
 
-        //leaveSpinner = (Spinner)findViewById(R.id.leaveSpinner);
-        ArrayList<String> leaveType = new ArrayList<String>();
+        List<String> leaveType = new ArrayList<String>();
         leaveType.add(prompt);
-        leaveType.add("Vacation");
-        leaveType.add("Sick");
-        leaveType.add("Maternity");
-        leaveType.add(other);
-
+        leaveType.addAll(myDB.getLeave());
         CustomSpinnerAdapter customSpinnerAdapter=new CustomSpinnerAdapter(LeaveActivity.this,leaveType);
         leaveSpinner.setAdapter(customSpinnerAdapter);
 
@@ -243,7 +313,8 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
                 leave_type = parent.getItemAtPosition(position).toString();
-                if(position == 4){
+
+                if(position == 6){
                     edtOther.setVisibility(View.VISIBLE);
                 }else{
                     edtOther.setVisibility(View.INVISIBLE);
@@ -280,7 +351,9 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
                         }
                     } else if (uri.toString().startsWith("file://")) {
                         displayName = myFile.getName();
+
                     }
+
                     txtAttachment.setText(displayName);
                     //String respons = uploadLeave(displayName,url,uri.toString());
                    // showToast(respons);
@@ -359,7 +432,8 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
     }
 
-    public void fileUploadFunction(String fileName,String leaveType,String fromDate,String toDate, String addr, String phone,String ema,String userID) {
+    public void fileUploadFunction(String fileName,String leaveType,String fromDate,String toDate,String ldate, String addr,
+                                   String phone,String ema,String userID,String leave_type) {
 
         filePathHolder = FilePath.getPath(this, uri);
 
@@ -375,19 +449,58 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
                 uploadReceiver.setDelegate(this);
                 uploadReceiver.setUploadID(fileID);
 
-                new MultipartUploadRequest(this, fileID, serverURL)
-                        .addFileToUpload(filePathHolder, "document")
-                        .addParameter("name", fileName)
-                        .addParameter("leaveType", leaveType)
-                        .addParameter("fromDate", fromDate)
-                        .addParameter("toDate", toDate)
-                        .addParameter("addr", addr)
-                        .addParameter("phone", phone)
-                        .addParameter("ema", ema)
-                        .addParameter("userId", userID)
-                        .setNotificationConfig(new UploadNotificationConfig())
-                        .setMaxRetries(5)
-                        .startUpload();
+                fileExtension = displayName.substring(displayName.lastIndexOf(".")+1);
+                //String data_url = getBase64FromFileName(filePathHolder);
+
+                //byte[] data = filePathHolder.getBytes("UTF-8");
+                String data_url ="data:"+fileExtension+";"+"base64,"+getBase64FromPict(filePathHolder);// Base64.encodeToString(data, Base64.DEFAULT);
+
+                try {
+
+                    JSONObject postDataParams = new JSONObject();
+                    postDataParams.put("extension", fileExtension);
+                    postDataParams.put("data_url", data_url);
+
+                    JSONObject allData = new JSONObject();
+                    allData.put("leave_type", leaveType);
+                    //allData.put("name", leaveType);
+                    allData.put("from_date", fromDate);
+                    allData.put("to_date", toDate);
+                    allData.put("address_on_leave", addr);
+                    allData.put("phone_on_leave", phone);
+                    allData.put("email_on_leave", ema);
+                    allData.put("user", userID);
+                    allData.put("last_day_of_work", ldate);
+                    allData.put("specific_leave_type", leave_type);
+                    allData.put("attachment", postDataParams.toString());
+
+                    new MultipartUploadRequest(this, fileID, serverURL)
+                            .addHeader("Authorization",token)
+                            .addHeader("Accept","application/json")
+                            .addFileToUpload(filePathHolder, "document")
+                           // .addParameter("", allData.toString())
+                            .addParameter("name", fileName)
+                            .addParameter("leave_type", leaveType)
+                            .addParameter("attachment", postDataParams.toString())
+                            .addParameter("from_date", fromDate)
+                            .addParameter("to_date", toDate)
+                            .addParameter("address_on_leave", addr)
+                            .addParameter("phone_on_leave", phone)
+                            .addParameter("email_on_leave", ema)
+                            .addParameter("user", userID)
+                            .addParameter("last_day_of_work",ldate)
+                            .addParameter("specific_leave_type",leave_type)
+                            .setNotificationConfig(new UploadNotificationConfig())
+                            .setMaxRetries(5)
+                            .startUpload();
+
+                    Log.e("DATA_TO_SEND+++++++++:", allData.toString());
+
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+
+
 
             } catch (Exception exception) {
 
@@ -420,6 +533,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         try {
             String response = new String(serverResponseBody, "UTF-8");
             showToast(response);
+            Log.e("RESULT+++++++++:",response);
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "UnsupportedEncodingException");
         }
@@ -483,6 +597,10 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             return false;
         }
 
+        if(!validateLastDay()){
+            return false;
+        }
+
         if(!validateLeave()){
             return false;
         }
@@ -532,6 +650,16 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         }
         return true;
     }
+    private boolean validateLastDay(){
+
+        if (edtLastDay.getText().toString().trim().isEmpty()) {
+            showToast("Please Select from date");
+            requestFocus(edtLastDay);
+            return false;
+        }
+
+        return true;
+    }
 
     private boolean validatetoDate(){
 
@@ -569,7 +697,8 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         }
     }
 
-    public void myDialog(final String leaveType, final String fromDate, final String toDate, final String addr, final String phone, final String ema,final String userId){
+    public void myDialog(final String leaveType, final String fromDate, final String toDate,final String ldate, final String addr,
+                         final String phone, final String ema,final String userId,final String specific_leave){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this,R.style.AlerDialogTheme);
         alertDialogBuilder.setMessage("Do you want to apply without an attachment?");
         alertDialogBuilder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
@@ -577,7 +706,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             public void onClick(DialogInterface dialog, int which) {
 
                 //Upload Without Attachment
-                new NoAttachment().execute(leaveType,fromDate,toDate,addr,phone,ema,userId);
+                new NoAttachment().execute(leaveType,fromDate,toDate,ldate,addr,phone,ema,userId,specific_leave);
             }
         });
         alertDialogBuilder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -587,6 +716,21 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             }
         });
 
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
+    public void dialogMessage(String message,String title){
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this,R.style.AlerDialogTheme);
+        alertDialogBuilder.setTitle(title);
+        alertDialogBuilder.setMessage(message);
+        alertDialogBuilder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
@@ -606,19 +750,24 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                 URL url = new URL(serverURL);
                 JSONObject postDataParams = new JSONObject();
-                postDataParams.put("leaveType", args[0]);
-                postDataParams.put("fromDate", args[1]);
-                postDataParams.put("toDate", args[2]);
-                postDataParams.put("addr", args[3]);
-                postDataParams.put("phone", args[4]);
-                postDataParams.put("ema", args[5]);
-                postDataParams.put("userId", args[6]);
+                postDataParams.put("leave_type", args[0]);
+                postDataParams.put("from_date", args[1]);
+                postDataParams.put("to_date", args[2]);
+                postDataParams.put("last_day_of_work", args[3]);
+                postDataParams.put("address_on_leave", args[4]);
+                postDataParams.put("phone_on_leave", args[5]);
+                postDataParams.put("email_on_leave", args[6]);
+                postDataParams.put("user", args[7]);
+                postDataParams.put("specific_leave_type", args[8]);
                 Log.e("params",postDataParams.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(15000 /* milliseconds */);
                 conn.setConnectTimeout(15000 /* milliseconds */);
                 conn.setRequestMethod("POST");
+                conn.setRequestProperty("Accept","application/json");
+                //conn.setRequestProperty("Content-Type","application/json");
+                conn.setRequestProperty("Authorization",token);
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
 
@@ -647,7 +796,19 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                 }
                 else {
-                    return new String("false : "+responseCode);
+                    BufferedReader in=new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                    return sb.toString();
+                    //return new String("false : "+responseCode);
                 }
 
 
@@ -665,7 +826,24 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
             }
 
             if(result != null){
-                showToast(result);
+                Log.e("RESULT+++++++++:",result);
+
+                try{
+
+                    JSONObject object = new JSONObject(result);
+                    int code = object.getInt("code");
+                    String msg  = object.getString("error");
+
+                    if(code == 200){
+                        showToast("Leave successfully uploaded");
+                    }else{
+                        showToast("Leave upload was unsuccessful, Error code: "+String.valueOf(code));
+                    }
+
+                }catch (JSONException e){
+
+                    e.printStackTrace();
+                }
             }else{
                 showToast("Error, please ensure you have data connection");
             }
@@ -703,12 +881,134 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         return result.toString();
     }
 
+    public class getLeave extends AsyncTask<String, Void, String> {
+
+        protected void onPreExecute(){
+
+            pDialog = new ProgressDialog(LeaveActivity.this);
+            pDialog.setMessage("Downloading Leave types...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(true);
+            pDialog.show();
+
+        }
+        protected String doInBackground(String... args) {
+            try{
+
+                URL url = new URL("http://52.90.80.92:8002/leave_types");
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(15000 /* milliseconds */);
+                conn.setConnectTimeout(15000 /* milliseconds */);
+                conn.setRequestMethod("GET");
+               // conn.setRequestProperty("accept","application/json");
+                conn.setRequestProperty("Authorization",args[0]);
+                conn.setDoInput(true);
+                responseCode=conn.getResponseCode();
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+
+                    BufferedReader in=new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                    return sb.toString();
+
+                }
+                else {
+                    BufferedReader in=new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                    return sb.toString();
+                    //return new String("false : "+responseCode);
+                }
+
+
+            }catch(Exception e){
+                return new String("Exception: " + e.getMessage());
+            }
+
+        }
+        @Override
+        protected void onPostExecute(String result) {
+
+
+            if (pDialog != null && pDialog.isShowing()) {
+                pDialog.dismiss();
+            }
+
+            if(result != null){
+                // showToast(result);
+                Log.e("RESULT+++++++++:",result);
+                try{
+
+                    JSONObject object = new JSONObject(result);
+                    int code = object.getInt("code");
+                    String msg  = object.getString("error");
+
+                    if(code == 200){
+                        JSONArray fullData = new JSONArray(object.getString("data"));
+                        for (int i = 0; i < fullData.length(); i++) {
+
+                            JSONObject obj = (JSONObject) fullData.get(i);
+                            int leaveId = obj.getInt("id");
+                            String leaveName = obj.getString("name");
+                            myDB.insertLeave(leaveId,leaveName);
+                        }
+
+
+                        reloadActivity();
+
+                    }else{
+                        showToast("Error downloading leave types, Error code: "+String.valueOf(code));
+                    }
+
+                }catch (JSONException e){
+
+                    e.printStackTrace();
+                }
+
+
+            }else{
+                showToast("Error, please ensure you have data connection");
+            }
+
+            if (responseCode == 404) {
+                showToast("Requested resource not found");
+            } else if (responseCode == 500) {
+                showToast("Something went wrong at server end");
+            }
+        }
+    }
+
+    public void reloadActivity(){
+
+        showToast("leave successfully downloaded");
+        Intent intent = new Intent(LeaveActivity.this, LeaveActivity.class);
+        startActivity(intent);
+
+    }
+
     public class CustomSpinnerAdapter extends BaseAdapter implements SpinnerAdapter {
 
         private final Context activity;
-        private ArrayList<String> asr;
+        private List<String> asr;
 
-        public CustomSpinnerAdapter(Context context,ArrayList<String> asr) {
+        public CustomSpinnerAdapter(Context context,List<String> asr) {
             this.asr=asr;
             activity = context;
         }
@@ -755,4 +1055,89 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         }
 
     }
+
+
+    private String getBase64FromFileName(String filename){
+
+        File file = new File(filename);
+        InputStream inputStream;
+        try {
+            inputStream = new FileInputStream(file);
+        } catch (FileNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+            return "";
+        }//You can get an inputStream using any IO API
+        byte[] bytes;
+        byte[] buffer = filename.getBytes();
+        int bytesRead;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                output.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        }
+        bytes = output.toByteArray();
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return "";
+        }
+        String encodedString = Base64.encodeToString(bytes, Base64.DEFAULT);
+
+       /* String attachedFile;
+        InputStream inputStream = null;//You can get an inputStream using any IO API
+        try {
+            inputStream = new FileInputStream(filename);
+        }catch (FileNotFoundException e1){
+            e1.printStackTrace();
+        }
+
+        byte[] buffer = new byte[8192];
+        int bytesRead;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        Base64OutputStream output64 = new Base64OutputStream(output, Base64.DEFAULT);
+        try {
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                output64.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try{
+            output64.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+
+        attachedFile = output.toString();*/
+        return encodedString;
+    }
+
+    private String getBase64FromPict(String path){
+
+        Bitmap bmp = null;
+        ByteArrayOutputStream bos = null;
+        byte[] bt = null;
+        String encodeString = null;
+        try{
+            bmp = BitmapFactory.decodeFile(path);
+            bos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 50, bos);
+            bt = bos.toByteArray();
+            encodeString = Base64.encodeToString(bt, Base64.DEFAULT);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return encodeString;
+    }
+
+
+
 }

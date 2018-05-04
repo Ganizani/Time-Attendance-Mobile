@@ -5,8 +5,10 @@ package classes;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import emplogtech.com.mytimesheet.activities.MainActivity;
 
@@ -26,18 +28,10 @@ public class AlarmReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // TODO Auto-generated method stub
 
-        if (intent.getAction() != null && context != null) {
-            if (intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED)) {
-                // Set the alarm here.
-                Log.d(TAG, "onReceive: BOOT_COMPLETED");
-                LocalData localData = new LocalData(context);
-                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_REMINDER_REQUEST_CODE);
-                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),DAILY_OUT_REMINDER_REQUEST_CODE);
-                return;
-            }
-        }
 
         Log.d(TAG, "onReceive: ");
+        //Toast.makeText(context,"Receiver called on receive",Toast.LENGTH_SHORT).show();
+        Intent background = new Intent(context, AlarmService.class);
 
         //Trigger the notification
 
@@ -48,15 +42,56 @@ public class AlarmReceiver extends BroadcastReceiver {
 
             if(code == DAILY_REMINDER_REQUEST_CODE){
 
-                NotificationScheduler.showNotification(context, MainActivity.class,
-                         "Reminder to clock IN", "Please Click to Clock IN",DAILY_REMINDER_REQUEST_CODE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    background.putExtra("requestCode",code);
+                    context.startForegroundService(background);
+                }else{
+                    background.putExtra("requestCode",code);
+                    context.startService(background);
+                }
+               /* NotificationScheduler.showNotification(context, MainActivity.class,
+                        "Reminder to clock IN", "Please Click to Clock IN",DAILY_REMINDER_REQUEST_CODE);*/
             }
             else if(code == DAILY_OUT_REMINDER_REQUEST_CODE){
 
-                NotificationScheduler.showNotification(context, MainActivity.class,
-                        "Reminder to clock OUT", "Please Click to clock OUT",DAILY_OUT_REMINDER_REQUEST_CODE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    background.putExtra("requestCode",code);
+                    context.startForegroundService(background);
+                }else{
+                    background.putExtra("requestCode",code);
+                    context.startService(background);
+                }
+
+                /*NotificationScheduler.showNotification(context, MainActivity.class,
+                        "Reminder to clock OUT", "Please Click to clock OUT",DAILY_OUT_REMINDER_REQUEST_CODE);*/
             }
         }
+
+
+        if ("android.intent.action.BOOT_COMPLETED".equalsIgnoreCase(intent.getAction())) {
+
+            // Set the alarm here.
+            Log.d(TAG, "onReceive: BOOT_COMPLETED");
+            //Toast.makeText(context,"Receiver called After Boot completed",Toast.LENGTH_SHORT).show();
+            LocalData localData = new LocalData(context);
+            NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_REMINDER_REQUEST_CODE);
+            NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),DAILY_OUT_REMINDER_REQUEST_CODE);
+            return;
+
+        }
+
+       /* if (intent.getAction() != null && context != null) {
+            if (intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED)) {
+                // Set the alarm here.
+                Log.d(TAG, "onReceive: BOOT_COMPLETED");
+                LocalData localData = new LocalData(context);
+                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_hour(), localData.get_min(),DAILY_REMINDER_REQUEST_CODE);
+                NotificationScheduler.setReminder(context, AlarmReceiver.class, localData.get_outHour(), localData.get_outMin(),DAILY_OUT_REMINDER_REQUEST_CODE);
+                return;
+            }
+        }*/
+
+
 
         //NotificationScheduler.showNotification(context, MainActivity.class,
                // "Reminder to clock", "Please Remember to clock");

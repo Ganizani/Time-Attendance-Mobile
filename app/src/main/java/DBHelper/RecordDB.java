@@ -3,6 +3,7 @@ package DBHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -26,17 +27,21 @@ public class RecordDB extends SQLiteOpenHelper {
     //Creates Table
     @Override
     public void onCreate(SQLiteDatabase database) {
-        String query;
+        String query,leav;
         query="CREATE TABLE record ( recID INTEGER PRIMARY KEY, user_id TEXT, user_name TEXT, " +
                 "update_status TEXT, dat TEXT, lat TEXT, lng TEXT, id INTEGER, status TEXT,imei TEXT," +
                 "department_id INTEGER)";
+        leav = "CREATE TABLE leav (leave_id INTEGER PRIMARY KEY,leave_name TEXT)";
         database.execSQL(query);
+        database.execSQL(leav);
     }
     @Override
     public void onUpgrade(SQLiteDatabase database, int version_old, int current_version) {
-        String query;
+        String query,leav;
         query="DROP TABLE IF EXISTS record";
+        leav="DROP TABLE IF EXISTS leav";
         database.execSQL(query);
+        database.execSQL(leav);
         onCreate(database);
     }
 
@@ -55,6 +60,23 @@ public class RecordDB extends SQLiteOpenHelper {
         values.put("department_id",department_id);
         database.insert("record", null, values);
         database.close();
+    }
+    public void insertLeave(int leave_id,String leave_name){
+
+        SQLiteDatabase database = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("leave_id",leave_id);
+        values.put("leave_name",leave_name);
+        database.insert("leav", null, values);
+        database.close();
+    }
+
+    public void deleteLeave(){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("leav",null,null);
+        db.close();
     }
 
     public void deleteRecord(String id){
@@ -82,6 +104,62 @@ public class RecordDB extends SQLiteOpenHelper {
         }
         database.close();
         return wordList;
+    }
+
+    public ArrayList<HashMap<String, String>> getAllLeave(){
+
+        ArrayList<HashMap<String, String>> leaveList;
+        leaveList = new ArrayList<HashMap<String, String>>();
+
+        SQLiteDatabase database = this.getWritableDatabase();
+        Cursor cursor = database.rawQuery("select * from leav", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("leave_id",cursor.getString(0));
+                map.put("leave_name", cursor.getString(1));
+                leaveList.add(map);
+            } while (cursor.moveToNext());
+        }
+        database.close();
+        return leaveList;
+
+    }
+
+    public List<String> getLeave(){
+
+        List<String> leaveList = new ArrayList<String>();
+
+        SQLiteDatabase database = this.getWritableDatabase();
+        Cursor cursor = database.rawQuery("select * from leav", null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                leaveList.add(cursor.getString(1));
+            } while (cursor.moveToNext());
+        }
+        database.close();
+        return leaveList;
+    }
+
+    public int getleaveId(String leaveName){
+
+        String selectQuery = "SELECT  * FROM leav where leave_name ='"+leaveName+"'";
+        SQLiteDatabase database = this.getWritableDatabase();
+        int leaveId = 0;
+
+        Cursor cursor = database.rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+
+                leaveId = cursor.getInt((cursor.getColumnIndex("leave_id")));
+
+            } while (cursor.moveToNext());
+        }
+        database.close();
+        return leaveId;
+
     }
 
     public String composeJSONfromSQLite(){
@@ -128,6 +206,7 @@ public class RecordDB extends SQLiteOpenHelper {
         database.close();
         return count;
     }
+
 
     public void updateSyncStatus(String id, String status){
         SQLiteDatabase database = this.getWritableDatabase();

@@ -3,27 +3,34 @@ package emplogtech.com.mytimesheet.activities;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import classes.AlarmService;
 import classes.SessionManager;
 import LocationUtil.PermissionUtils;
 import LocationUtil.PermissionUtils.PermissionResultCallback;
@@ -42,6 +49,7 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -78,11 +86,12 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     @BindView(R.id.tvEmpty)TextView tvEmpty;
     @BindView(R.id.txtWelcome)TextView txtWelcome;
     @BindView(R.id.txtClock)TextView txtClock;
-    @BindView(R.id.rlPickLocation)RelativeLayout rlPick;
+    @BindView(R.id.llClockIn)LinearLayout rlPick;   //Clock IN
+    @BindView(R.id.llClockOut)LinearLayout llClockOut;   //Clock out
 
     int responseCode;
     ProgressDialog prgDialog;
-    String recordURL = "http://52.90.80.92:8002/records/mobile";
+    String recordURL = "http://52.90.80.92:8002/records";
 
 
     // LogCat tag
@@ -99,9 +108,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     double latitude;
     double longitude;
-    String locationTime;
+    String locationTime,locationDate;
 
-    String deptId,userId;
+    String deptId,userId,token,identifier;
 
     // list of permissions
 
@@ -122,27 +131,27 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         session = new SessionManager(this);
         session.checkLogin();
 
-        prefStatus = getFromSP("status");
-        if(prefStatus != null){
-
-            if(prefStatus.equals("IN")){
-                txtClock.setText("CLOCK OUT");
-                status = "OUT";
-            }else{
-                txtClock.setText("CLOCK IN");
-                status = "IN";
-            }
-        }else{
-            txtClock.setText("CLOCK IN");
-            status = "IN";
-        }
-
-
         HashMap<String, String> user = session.getUserDetails();
         String username = user.get(SessionManager.KEY_FULLNAME);
         userId = user.get(SessionManager.KEY_UID);
         deptId = user.get(SessionManager.KEY_DEPTID);
+        token = "Bearer "+user.get(SessionManager.KEY_TOKEN);
 
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(MainActivity.this,new String[]{ Manifest.permission.READ_PHONE_STATE}, 1);
+            // Permission is not granted
+        }else{
+
+            TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+            if (telephonyManager != null)
+                identifier = telephonyManager.getDeviceId();
+            else
+                identifier = "Not available";
+
+        }
 
 
 
@@ -168,19 +177,48 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                     longitude = mLastLocation.getLongitude();
                     getAddress();
                     Date date=new Date(mLastLocation.getTime());
-                    SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    locationTime = sdf2.format(date);
-                    String time = "Timestamp: "+locationTime;
+                    SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+                    SimpleDateFormat mytime = new SimpleDateFormat("HH:mm:ss");
+                    locationDate = sdf2.format(date);
+                    locationTime = mytime.format(date);
+                    status = "IN";
+                    String time = "Timestamp: "+locationDate+" "+locationTime;
                     tvAddress.append("\n"+time);
                     tvAddress.append("\n"+"Status: "+status);
-                    //showToast(locationTime);
-                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationTime,locationTime,deptId,status);
+                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationDate,locationTime,deptId,status,token,identifier);
                     saveInSp("status",status);
-                    if(status.equals("IN")){
-                        txtClock.setText("CLOCK OUT");
-                    }else
-                        txtClock.setText("CLOCK IN");
 
+                } else {
+
+                  /*  if(btnProceed.isEnabled())
+                        btnProceed.setEnabled(false);*/
+                    showToast("Couldn't get the location. Make sure location is enabled on the device before clocking");
+                }
+
+
+            }
+        });
+
+        llClockOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                getLocation();
+                if (mLastLocation != null) {
+                    latitude = mLastLocation.getLatitude();
+                    longitude = mLastLocation.getLongitude();
+                    getAddress();
+                    Date date=new Date(mLastLocation.getTime());
+                    SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+                    SimpleDateFormat mytime = new SimpleDateFormat("HH:mm:ss");
+                    locationDate = sdf2.format(date);
+                    locationTime = mytime.format(date);
+                    status = "OUT";
+                    String time = "Timestamp: "+locationDate+" "+locationTime;
+                    tvAddress.append("\n"+time);
+                    tvAddress.append("\n"+"Status: "+status);
+                    new clock().execute(userId,String.valueOf(latitude),String.valueOf(longitude),locationDate,locationTime,deptId,status,token,identifier);
+                    saveInSp("status",status);
 
                 } else {
 
@@ -196,7 +234,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         btnProceed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //showToast(String.valueOf(latitude)+"  "+String.valueOf(longitude));
 
                 Intent intent = new Intent(getApplicationContext(),LeaveActivity.class);
                 startActivity(intent);
@@ -401,7 +438,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         return true;
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -452,6 +488,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
         super.onResume();
         checkPlayServices();
     }
+
 
     /**
      * Google api callback methods
@@ -538,13 +575,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                 URL url = new URL(recordURL);
                 JSONObject postDataParams = new JSONObject();
-                postDataParams.put("user_id", args[0]);
+                postDataParams.put("user", args[0]);
                 postDataParams.put("status", args[6]);
                 postDataParams.put("latitude", args[1]);
                 postDataParams.put("longitude", args[2]);
                 postDataParams.put("date", args[3]);
                 postDataParams.put("time", args[4]);
                 postDataParams.put("deptId", args[5]);
+                postDataParams.put("imei_number", args[8]);
 
                 //postDataParams.put("token","");
                 Log.e("params",postDataParams.toString());
@@ -553,6 +591,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 conn.setReadTimeout(15000 /* milliseconds */);
                 conn.setConnectTimeout(15000 /* milliseconds */);
                 conn.setRequestMethod("POST");
+                conn.setRequestProperty("Accept","application/json");
+                //conn.setRequestProperty("Content-Type","application/json");
+                conn.setRequestProperty("Authorization",args[7]);
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
 
@@ -581,7 +622,19 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
                 }
                 else {
-                    return new String("false : "+responseCode);
+                    BufferedReader in=new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                    return sb.toString();
+                    //return new String("false : "+responseCode);
                 }
 
 
@@ -597,13 +650,25 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
                 prgDialog.dismiss();
             }
             if(result != null){
-                //showToast(result);
+               // showToast(result);
+                Log.e("RESULT+++++++++:",result);
+                try{
 
-                if(result.equals(String.valueOf(1))){
-                    showToast("Clock Successful");
-                }else{
-                    showToast("Clock Unsuccessful");
+                    JSONObject object = new JSONObject(result);
+                    int code = object.getInt("code");
+                    String msg  = object.getString("error");
+
+                    if(code == 200){
+                        showToast("CLOCK "+status +" successful");
+                    }else{
+                        showToast("CLOCK "+status +" was unsuccessful, Error code: "+String.valueOf(code));
+                    }
+
+                }catch (JSONException e){
+
+                    e.printStackTrace();
                 }
+
 
             }else{
                 showToast("Error, please ensure you have data connection");
@@ -616,6 +681,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             }
         }
     }
+
 
     public String getPostDataString(JSONObject params) throws Exception {
 

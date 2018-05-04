@@ -85,7 +85,7 @@ public class Login extends Activity {
 
             try{
 
-                URL url = new URL("http://52.90.80.92:8002/users/mobile/login");
+                URL url = new URL("http://52.90.80.92:8002/users/login");
 
                 JSONObject postDataParams = new JSONObject();
                 postDataParams.put("email", args[0]);
@@ -138,9 +138,11 @@ public class Login extends Activity {
         protected void onPostExecute(String result) {
 
             int success = 0;
+            String token="";
             String message = "";
             String name="";
             int id=0,compID=0,deptID=0;
+
 
             if (pDialog != null && pDialog.isShowing()) {
                 pDialog.dismiss();
@@ -150,13 +152,16 @@ public class Login extends Activity {
                 try{
 
                     JSONObject object = new JSONObject(result);
-                    success = object.getInt("success");
-                    message = object.getString("message");
-                    if(success == 1){
-                    id = object.getInt("id");
-                    compID = object.getInt("compID");
-                    deptID = object.getInt("deptID");
-                    name = object.getString("name");
+                    success = object.getInt("code");
+                    message = object.getString("error");
+                    if(success == 200){
+                        JSONObject fullData = new JSONObject(object.getString("data"));
+
+                    id = fullData.getInt("id");
+                    deptID = fullData.getInt("department_id");
+                    token = fullData.getString("token");
+                    name = fullData.getString("name");
+
                     }
 
 
@@ -178,13 +183,13 @@ public class Login extends Activity {
 
             }
 
-            if(success == 1){
+            if(success == 200){
 
-                session.createLoginSession(name,String.valueOf(compID),String.valueOf(id),String.valueOf(deptID));
+                session.createLoginSession(name,token,String.valueOf(id),String.valueOf(deptID));
                 Intent intent = new Intent(Login.this, MainActivity.class);
                 startActivity(intent);
-                Toast.makeText(getApplicationContext(), message,
-                        Toast.LENGTH_LONG).show();
+                /*Toast.makeText(getApplicationContext(), "",
+                        Toast.LENGTH_LONG).show();*/
                 Log.e("RESULT++++++:",result);
 
             }else{

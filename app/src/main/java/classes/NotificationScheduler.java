@@ -32,6 +32,7 @@ public class NotificationScheduler {
     public static final int DAILY_REMINDER_REQUEST_CODE=100;
     public static final String TAG="NotificationScheduler";
 
+
     public static void setReminder(Context context,Class<?> cls,int hour, int min,int resquestCode)
     {
         Calendar calendar = Calendar.getInstance();
@@ -68,7 +69,6 @@ public class NotificationScheduler {
     public static void cancelReminder(Context context,Class<?> cls,int resquestCode)
     {
         // Disable a receiver
-
         ComponentName receiver = new ComponentName(context, cls);
         PackageManager pm = context.getPackageManager();
 
@@ -124,9 +124,10 @@ public class NotificationScheduler {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("notify_001",
-                    "Channel human readable title",
+                    "Clock reminder channel",
                     NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(channel);
+
         }
         notificationManager.notify(resquestCode, notification);
 

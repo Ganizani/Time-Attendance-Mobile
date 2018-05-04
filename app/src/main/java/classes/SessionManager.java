@@ -36,7 +36,7 @@ public class SessionManager {
     // FullName address (make variable public to access from outside)
     public static final String KEY_FULLNAME = "fullName";
 
-    public static final String KEY_COMPID = "compID";
+    public static final String KEY_TOKEN = "token";
     public static final String KEY_DEPTID = "deptID";
     public static final String KEY_UID = "id";
 
@@ -50,7 +50,7 @@ public class SessionManager {
     /**
      * Create login session
      * */
-    public void createLoginSession(String fullName,String compID, String uID,String deptID){
+    public void createLoginSession(String fullName,String token, String uID,String deptID){
         // Storing login value as TRUE
         editor.putBoolean(IS_LOGIN, true);
         // Storing user id in pref
@@ -58,7 +58,7 @@ public class SessionManager {
         // Storing name in pref
         editor.putString(KEY_FULLNAME, fullName);
         //storing company ID in pref
-        editor.putString(KEY_COMPID,compID);
+        editor.putString(KEY_TOKEN,token);
         editor.putString(KEY_DEPTID,deptID);
         // commit changes
         editor.commit();
@@ -94,7 +94,7 @@ public class SessionManager {
     public HashMap<String, String> getUserDetails(){
         HashMap<String, String> user = new HashMap<String, String>();
         // user name
-        user.put(KEY_COMPID, pref.getString(KEY_COMPID, null));
+        user.put(KEY_TOKEN, pref.getString(KEY_TOKEN, null));
 
         // user email id
         user.put(KEY_FULLNAME, pref.getString(KEY_FULLNAME, null));
