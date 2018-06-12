@@ -21,6 +21,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -63,6 +64,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
 
     int responseCode;
     ProgressDialog prgDialog;
-    String recordURL = "http://52.90.80.92:8002/records";
+    String recordURL = "http://129.232.196.28:8002/records";
 
 
     // LogCat tag
@@ -235,6 +237,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             @Override
             public void onClick(View view) {
 
+
                 Intent intent = new Intent(getApplicationContext(),LeaveActivity.class);
                 startActivity(intent);
             }
@@ -247,6 +250,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
             buildGoogleApiClient();
         }
 
+    }
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN){
+            this.finishAffinity();
+            return true;
+        } else if(keyCode == KeyEvent.KEYCODE_HOME){
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
 

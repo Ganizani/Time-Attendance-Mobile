@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -85,7 +86,7 @@ public class Login extends Activity {
 
             try{
 
-                URL url = new URL("http://52.90.80.92:8002/users/login");
+                URL url = new URL("http://129.232.196.28:8002/users/login");
 
                 JSONObject postDataParams = new JSONObject();
                 postDataParams.put("email", args[0]);
@@ -200,7 +201,16 @@ public class Login extends Activity {
         }
     }
 
-
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN){
+            this.finishAffinity();
+            return true;
+        } else if(keyCode == KeyEvent.KEYCODE_HOME){
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
     public String getPostDataString(JSONObject params) throws Exception {
 

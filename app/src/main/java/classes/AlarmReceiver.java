@@ -10,6 +10,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
 import emplogtech.com.mytimesheet.activities.MainActivity;
 
 /**
@@ -40,7 +45,9 @@ public class AlarmReceiver extends BroadcastReceiver {
             int code = extras.getInt("requestCode");
             Log.d(TAG, String.valueOf(code));
 
-            if(code == DAILY_REMINDER_REQUEST_CODE){
+
+
+            if(code == DAILY_REMINDER_REQUEST_CODE && checkDay()){
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     background.putExtra("requestCode",code);
@@ -52,7 +59,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                /* NotificationScheduler.showNotification(context, MainActivity.class,
                         "Reminder to clock IN", "Please Click to Clock IN",DAILY_REMINDER_REQUEST_CODE);*/
             }
-            else if(code == DAILY_OUT_REMINDER_REQUEST_CODE){
+            else if(code == DAILY_OUT_REMINDER_REQUEST_CODE && checkDay()){
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     background.putExtra("requestCode",code);
@@ -108,6 +115,21 @@ public class AlarmReceiver extends BroadcastReceiver {
         }*/
 
 
+    }
+
+    public boolean checkDay(){
+        boolean dayOfWeek;
+        Calendar calender = Calendar.getInstance();
+        Date date = calender.getTime();
+        String weekday = new SimpleDateFormat("EE", Locale.ENGLISH).format(date.getTime());
+        if(weekday.equals("Sat")){
+            dayOfWeek = false;
+        }else if(weekday.equals("Sun")){
+            dayOfWeek = false;
+        }else{
+            dayOfWeek = true;
+        }
+            return dayOfWeek;
     }
 }
 

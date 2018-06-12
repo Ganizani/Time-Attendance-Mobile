@@ -97,7 +97,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
     @BindView(R.id.txtAttachment)TextView txtAttachment;
     @BindView(R.id.imgAttachment)ImageView imgAttachment;
     @BindView(R.id.imgDownload)ImageView imgDownload;
-    String serverURL = "http://52.90.80.92:8002/leaves";
+    String serverURL = "http://129.232.196.28:8002/leaves";
     private static final String TAG = "AndroidUploadService";
 
     ProgressDialog prgDialog,pDialog;
@@ -895,7 +895,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
         protected String doInBackground(String... args) {
             try{
 
-                URL url = new URL("http://52.90.80.92:8002/leave_types");
+                URL url = new URL("http://129.232.196.28:8002/leave_types");
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setReadTimeout(15000 /* milliseconds */);

@@ -12,11 +12,13 @@
         android:layout_centerInParent="true"/>
 
     <RelativeLayout
+        android:id="@+id/rLPowered"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/splashscreen">
 
         <TextView
+            android:id="@+id/txtPoweredBy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/powered_by"

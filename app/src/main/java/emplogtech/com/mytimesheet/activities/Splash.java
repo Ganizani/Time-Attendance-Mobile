@@ -6,10 +6,16 @@ import android.os.Bundle;
 import android.view.Window;
 import android.os.Handler;
 import android.view.WindowManager;
+import android.widget.TextView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import emplogtech.com.mytimesheet.BuildConfig;
 import emplogtech.com.mytimesheet.R;
 
 public class Splash extends Activity {
+
+    @BindView(R.id.txtPoweredBy)TextView txtPoweredBy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,6 +25,9 @@ public class Splash extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_splash);
 
+        ButterKnife.bind(this);
+        String versionName = BuildConfig.VERSION_NAME;
+        txtPoweredBy.append("    "+versionName);
                         /* New Handler to start the Menu-Activity
          * and close this Splash-Screen after some seconds.*/
         new Handler().postDelayed(new Runnable() {
