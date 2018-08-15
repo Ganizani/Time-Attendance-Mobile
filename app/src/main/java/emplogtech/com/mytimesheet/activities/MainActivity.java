@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionCallbac
     int responseCode;
     ProgressDialog prgDialog;
     String recordURL = "http://129.232.196.28:8002/records";
+    String UAT = "http://52.90.80.92:8002/records";
 
 
     // LogCat tag

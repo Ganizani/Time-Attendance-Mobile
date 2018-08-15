@@ -98,6 +98,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
     @BindView(R.id.imgAttachment)ImageView imgAttachment;
     @BindView(R.id.imgDownload)ImageView imgDownload;
     String serverURL = "http://129.232.196.28:8002/leaves";
+    String UAT = "http://52.90.80.92:8002/leaves";
     private static final String TAG = "AndroidUploadService";
 
     ProgressDialog prgDialog,pDialog;
@@ -962,6 +963,7 @@ public class LeaveActivity extends AppCompatActivity implements SingleUploadBroa
 
                     if(code == 200){
                         JSONArray fullData = new JSONArray(object.getString("data"));
+                        myDB.deleteLeave();
                         for (int i = 0; i < fullData.length(); i++) {
 
                             JSONObject obj = (JSONObject) fullData.get(i);
